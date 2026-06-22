@@ -88,7 +88,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         var checkUpdatesItem = new ToolStripMenuItem("Check for updates now…", null,
             (_, _) => CheckForUpdates(userInitiated: true));
 
-        var versionItem = new ToolStripMenuItem($"Version {Updater.CurrentVersion}") { Enabled = false };
+        var aboutItem = new ToolStripMenuItem($"About (v{Updater.CurrentVersion})…", null,
+            (_, _) => ShowAbout());
 
         var quitItem = new ToolStripMenuItem("Quit", null, (_, _) => ExitApp());
 
@@ -109,7 +110,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             _autoUpdateItem,
             new ToolStripSeparator(),
             checkUpdatesItem,
-            versionItem,
+            aboutItem,
             new ToolStripSeparator(),
             quitItem,
         });
@@ -326,6 +327,12 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         _config.AutoCheckUpdates = _autoUpdateItem.Checked;
         _config.Save();
+    }
+
+    private static void ShowAbout()
+    {
+        using var about = new AboutForm();
+        about.ShowDialog();
     }
 
     // ----------------------------------------------------------------------

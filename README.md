@@ -15,6 +15,9 @@ Picture).
 - No admin rights required for normal operation.
 - Only one third-party dependency: `AudioSwitcher.AudioApi.CoreAudio`.
 
+If this saves you reaching for the sound settings every time you sit down to
+play: [**☕ Buy me a coffee**](https://buymeacoffee.com/vancityactivist).
+
 ---
 
 ## How detection works (and why it's not just "is Steam running")
@@ -86,7 +89,7 @@ instead of breaking.
 - **Start with Windows** — adds/removes a per-user (HKCU) `Run` entry pointing at the exe. Reflects the real registry state on startup.
 - **Check for updates automatically** — see [Updates](#updates) below.
 - **Check for updates now…** — manual update check.
-- **Version X.Y.Z** — the running version.
+- **About (vX.Y.Z)…** — version info and links (project page + Buy Me a Coffee).
 - **Quit**.
 
 ---
@@ -182,6 +185,7 @@ Edit `PollIntervalMs` to change how often detection runs (the app clamps to a
 | `Config.cs` | JSON config in `%APPDATA%`. |
 | `StartupManager.cs` | HKCU `Run` key for "Start with Windows". |
 | `Updater.cs` | GitHub-Releases-based self-update (check, download, swap). |
+| `AboutForm.cs` | About dialog with version + project / support links. |
 | `Logger.cs` | Best-effort timestamped log file. |
 
 ---
@@ -193,3 +197,12 @@ NAudio can *enumerate* devices but **cannot set the default output device**.
 interface, which is the correct (and only practical) way to change the default
 from user code. We call both `SetAsDefault()` and `SetAsDefaultCommunications()`
 so every audio role moves together.
+
+---
+
+## Support
+
+Built this to scratch my own couch-gaming itch and shared it in case it helps
+you too. If it does, you can say thanks here:
+
+[**☕ Buy me a coffee**](https://buymeacoffee.com/vancityactivist)
