@@ -65,6 +65,37 @@ Copy that one file anywhere and run it. No .NET install needed on the target.
 
 ---
 
+## "Windows protected your PC" / unknown publisher
+
+The downloaded `.exe` is **not code-signed**, so Windows SmartScreen shows a
+blue *"Windows protected your PC"* dialog and Defender may flag it as from an
+*unknown publisher*. This is expected for unsigned indie apps — it reflects the
+lack of a (paid) code-signing certificate and download reputation, **not**
+anything about the program itself.
+
+To run it anyway:
+
+1. On the SmartScreen dialog, click **More info**.
+2. Click **Run anyway**.
+
+Or before launching: right-click the `.exe` → **Properties** → tick
+**Unblock** at the bottom → **OK**.
+
+**Verify the download** (optional but recommended): each release includes a
+`BigPictureAudioSwitcher.exe.sha256` file. Compare it against your download:
+
+```powershell
+Get-FileHash .\BigPictureAudioSwitcher.exe -Algorithm SHA256
+```
+
+The hash should match the one in the `.sha256` file from the same release.
+
+> Want the warning gone entirely? That requires code-signing the exe (e.g.
+> Azure Trusted Signing, or an OV/EV certificate). See the issue tracker — it's
+> a cost/identity decision, not a code change.
+
+---
+
 ## First-run setup (picking your devices)
 
 1. Run `BigPictureAudioSwitcher.exe`. An icon appears in the system tray.
