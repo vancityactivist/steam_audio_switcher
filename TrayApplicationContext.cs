@@ -17,8 +17,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ContextMenuStrip _menu;
     private readonly ToolStripMenuItem _statusItem;
     private readonly ToolStripMenuItem _defaultDeviceItem;
-    private readonly ToolStripMenuItem _receiverMenu;
-    private readonly ToolStripMenuItem _headsetMenu;
+    private readonly ToolStripMenuItem _defaultDeviceMenu;
+    private readonly ToolStripMenuItem _bigPictureDeviceMenu;
     private readonly ToolStripMenuItem _pauseItem;
     private readonly ToolStripMenuItem _notifyItem;
     private readonly ToolStripMenuItem _startupItem;
@@ -43,13 +43,13 @@ public sealed class TrayApplicationContext : ApplicationContext
         _statusItem = new ToolStripMenuItem("Big Picture: …") { Enabled = false };
         _defaultDeviceItem = new ToolStripMenuItem("Default: …") { Enabled = false };
 
-        _receiverMenu = new ToolStripMenuItem("Receiver (AVR) device");
-        _headsetMenu = new ToolStripMenuItem("Headset device");
+        _defaultDeviceMenu = new ToolStripMenuItem("Default audio device");
+        _bigPictureDeviceMenu = new ToolStripMenuItem("Steam Big Picture audio device");
 
-        var switchToReceiver = new ToolStripMenuItem("Switch to receiver now", null,
-            (_, _) => ManualSwitch(_config.ReceiverDeviceId, "receiver"));
-        var switchToHeadset = new ToolStripMenuItem("Switch to headset now", null,
-            (_, _) => ManualSwitch(_config.HeadsetDeviceId, "headset"));
+        var switchToDefault = new ToolStripMenuItem("Switch to default device now", null,
+            (_, _) => ManualSwitch(_config.DefaultDeviceId, "default"));
+        var switchToBigPicture = new ToolStripMenuItem("Switch to Big Picture device now", null,
+            (_, _) => ManualSwitch(_config.BigPictureDeviceId, "Big Picture"));
 
         _pauseItem = new ToolStripMenuItem("Pause auto-switching", null, OnTogglePause)
         {
@@ -76,11 +76,11 @@ public sealed class TrayApplicationContext : ApplicationContext
             _statusItem,
             _defaultDeviceItem,
             new ToolStripSeparator(),
-            _receiverMenu,
-            _headsetMenu,
+            _defaultDeviceMenu,
+            _bigPictureDeviceMenu,
             new ToolStripSeparator(),
-            switchToReceiver,
-            switchToHeadset,
+            switchToDefault,
+            switchToBigPicture,
             new ToolStripSeparator(),
             _pauseItem,
             _notifyItem,
@@ -149,9 +149,9 @@ public sealed class TrayApplicationContext : ApplicationContext
         }
 
         if (active)
-            AutoSwitch(_config.ReceiverDeviceId, "receiver (Big Picture opened)");
+            AutoSwitch(_config.BigPictureDeviceId, "Big Picture audio device (Big Picture opened)");
         else
-            AutoSwitch(_config.HeadsetDeviceId, "headset (Big Picture closed)");
+            AutoSwitch(_config.DefaultDeviceId, "default audio device (Big Picture closed)");
     }
 
     private void AutoSwitch(string? deviceId, string label)
@@ -203,10 +203,10 @@ public sealed class TrayApplicationContext : ApplicationContext
         var defaultName = _audio.GetDeviceName(currentDefaultId) ?? "unknown";
         _defaultDeviceItem.Text = $"Default: {defaultName}";
 
-        BuildDeviceSubmenu(_receiverMenu, devices, _config.ReceiverDeviceId,
-            id => { _config.ReceiverDeviceId = id; _config.Save(); });
-        BuildDeviceSubmenu(_headsetMenu, devices, _config.HeadsetDeviceId,
-            id => { _config.HeadsetDeviceId = id; _config.Save(); });
+        BuildDeviceSubmenu(_defaultDeviceMenu, devices, _config.DefaultDeviceId,
+            id => { _config.DefaultDeviceId = id; _config.Save(); });
+        BuildDeviceSubmenu(_bigPictureDeviceMenu, devices, _config.BigPictureDeviceId,
+            id => { _config.BigPictureDeviceId = id; _config.Save(); });
     }
 
     /// <summary>

@@ -13,10 +13,14 @@ namespace BigPictureAudioSwitcher;
 /// </summary>
 public sealed class Config
 {
-    /// <summary>Receiver/AVR device Id. Used while Big Picture is active.</summary>
-    public string? ReceiverDeviceId { get; set; }
+    /// <summary>Device Id used while Big Picture is ACTIVE.</summary>
+    public string? BigPictureDeviceId { get; set; }
 
-    /// <summary>Headset device Id. Used while Big Picture is idle (restored to).</summary>
+    /// <summary>Device Id used while Big Picture is IDLE (the normal default, restored to).</summary>
+    public string? DefaultDeviceId { get; set; }
+
+    // ---- Legacy keys (pre-v1.0). Read for one-time migration only; see Load(). ----
+    public string? ReceiverDeviceId { get; set; }
     public string? HeadsetDeviceId { get; set; }
 
     /// <summary>Poll interval in milliseconds. Default 2s.</summary>
@@ -36,7 +40,7 @@ public sealed class Config
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     /// <summary>%APPDATA%\BigPictureAudioSwitcher</summary>
@@ -60,7 +64,10 @@ public sealed class Config
                 var json = File.ReadAllText(ConfigPath);
                 var cfg = JsonSerializer.Deserialize<Config>(json, JsonOptions);
                 if (cfg is not null)
+                {
+                    cfg.MigrateLegacyKeys();
                     return cfg;
+                }
             }
         }
         catch (Exception ex)
@@ -68,6 +75,22 @@ public sealed class Config
             Logger.Log($"Failed to load config, using defaults: {ex.Message}");
         }
         return new Config();
+    }
+
+    /// <summary>
+    /// One-time migration from the pre-v1.0 key names (Receiver/Headset) to the
+    /// new agnostic names. Old configs keep their device selections; the legacy
+    /// keys are then cleared so they drop out on the next Save.
+    /// </summary>
+    private void MigrateLegacyKeys()
+    {
+        if (string.IsNullOrEmpty(BigPictureDeviceId) && !string.IsNullOrEmpty(ReceiverDeviceId))
+            BigPictureDeviceId = ReceiverDeviceId;
+        if (string.IsNullOrEmpty(DefaultDeviceId) && !string.IsNullOrEmpty(HeadsetDeviceId))
+            DefaultDeviceId = HeadsetDeviceId;
+
+        ReceiverDeviceId = null;
+        HeadsetDeviceId = null;
     }
 
     /// <summary>Persist to disk. Never throws.</summary>
