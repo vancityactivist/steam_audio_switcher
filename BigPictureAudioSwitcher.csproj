@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe => no console window ever appears. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <AssemblyName>BigPictureAudioSwitcher</AssemblyName>
+    <RootNamespace>BigPictureAudioSwitcher</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+
+    <!-- Single-file self-contained publish defaults. These can also be passed
+         on the command line (see README) but baking them in keeps the publish
+         command short and the behaviour predictable. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- AudioSwitcher / WinForms have assemblies that don't trim cleanly, so
+         leave trimming OFF. The exe is larger but reliable. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The ONLY third-party dependency. Wraps the undocumented IPolicyConfig
+         COM interface so we can actually SET the default output device
+         (NAudio can enumerate but cannot set the default). -->
+    <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="4.0.0-alpha5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embed the tray icon into the exe so the single-file build is truly
+         self-contained. Swap app.ico for your own 16x16/32x32 .ico to rebrand. -->
+    <EmbeddedResource Include="app.ico" />
+  </ItemGroup>
+
+</Project>
