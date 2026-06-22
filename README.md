@@ -84,7 +84,34 @@ instead of breaking.
 - **Pause auto-switching** — detection keeps updating the status, but no switching happens.
 - **Notify on switch** — show a balloon notification on each auto-switch.
 - **Start with Windows** — adds/removes a per-user (HKCU) `Run` entry pointing at the exe. Reflects the real registry state on startup.
+- **Check for updates automatically** — see [Updates](#updates) below.
+- **Check for updates now…** — manual update check.
+- **Version X.Y.Z** — the running version.
 - **Quit**.
+
+---
+
+## Updates
+
+The app has a built-in updater tied to **GitHub Releases** (no separate
+installer or store needed):
+
+- On startup and once a day, it queries the repo's *latest release* (the public
+  GitHub API, no auth) and compares the release tag (`vX.Y.Z`) to the running
+  version. You can also trigger a check from **"Check for updates now…"**.
+- If a newer version exists, you get a prompt with the release notes. Choose
+  **Yes** and it downloads the new `BigPictureAudioSwitcher.exe`, swaps it in,
+  and restarts itself.
+- The swap is safe: Windows won't let you overwrite a running exe, so the
+  updater renames the running exe to `…​.exe.old`, moves the freshly downloaded
+  exe into place, relaunches, and deletes the leftover `.old` on next start. A
+  failed/partial download never touches your working copy.
+- Turn the automatic checks off with **"Check for updates automatically"**
+  (persisted as `AutoCheckUpdates` in config); the manual check still works.
+
+To publish a new version: bump `<Version>` in the `.csproj`, push a matching
+`vX.Y.Z` tag, and the build workflow creates the Release with the exe attached —
+existing installs pick it up automatically.
 
 ---
 
@@ -125,7 +152,8 @@ loop). The file self-truncates past ~1 MB. Safe to delete any time.
   "PollIntervalMs": 2000,
   "Paused": false,
   "NotifyOnSwitch": true,
-  "StartWithWindows": false
+  "StartWithWindows": false,
+  "AutoCheckUpdates": true
 }
 ```
 
@@ -153,6 +181,7 @@ Edit `PollIntervalMs` to change how often detection runs (the app clamps to a
 | `AudioManager.cs` | AudioSwitcher wrapper: enumerate + set default output. |
 | `Config.cs` | JSON config in `%APPDATA%`. |
 | `StartupManager.cs` | HKCU `Run` key for "Start with Windows". |
+| `Updater.cs` | GitHub-Releases-based self-update (check, download, swap). |
 | `Logger.cs` | Best-effort timestamped log file. |
 
 ---

@@ -22,6 +22,13 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _pauseItem;
     private readonly ToolStripMenuItem _notifyItem;
     private readonly ToolStripMenuItem _startupItem;
+    private readonly ToolStripMenuItem _autoUpdateItem;
+
+    /// <summary>Once-a-day update check timer.</summary>
+    private readonly System.Windows.Forms.Timer _updateTimer;
+
+    /// <summary>Guards against overlapping update checks/downloads.</summary>
+    private bool _updateInProgress;
 
     /// <summary>Tracks the last detected Big Picture state so we only act on transitions.</summary>
     private bool _bigPictureActive;
@@ -32,6 +39,9 @@ public sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext()
     {
         _config = Config.Load();
+
+        // Remove any leftover ".old"/".new" files from a previous self-update.
+        Updater.CleanupLeftovers();
 
         // Reconcile the persisted "start with Windows" preference with the
         // actual registry state — the registry is the source of truth.
@@ -69,6 +79,17 @@ public sealed class TrayApplicationContext : ApplicationContext
             Checked = _config.StartWithWindows,
         };
 
+        _autoUpdateItem = new ToolStripMenuItem("Check for updates automatically", null, OnToggleAutoUpdate)
+        {
+            CheckOnClick = true,
+            Checked = _config.AutoCheckUpdates,
+        };
+
+        var checkUpdatesItem = new ToolStripMenuItem("Check for updates now…", null,
+            (_, _) => CheckForUpdates(userInitiated: true));
+
+        var versionItem = new ToolStripMenuItem($"Version {Updater.CurrentVersion}") { Enabled = false };
+
         var quitItem = new ToolStripMenuItem("Quit", null, (_, _) => ExitApp());
 
         _menu.Items.AddRange(new ToolStripItem[]
@@ -85,6 +106,10 @@ public sealed class TrayApplicationContext : ApplicationContext
             _pauseItem,
             _notifyItem,
             _startupItem,
+            _autoUpdateItem,
+            new ToolStripSeparator(),
+            checkUpdatesItem,
+            versionItem,
             new ToolStripSeparator(),
             quitItem,
         });
@@ -110,8 +135,24 @@ public sealed class TrayApplicationContext : ApplicationContext
         _timer.Tick += (_, _) => Poll();
         _timer.Start();
 
+        // ---- Update check timer (once a day) ----
+        _updateTimer = new System.Windows.Forms.Timer
+        {
+            Interval = (int)TimeSpan.FromHours(24).TotalMilliseconds,
+        };
+        _updateTimer.Tick += (_, _) =>
+        {
+            if (_config.AutoCheckUpdates)
+                CheckForUpdates(userInitiated: false);
+        };
+        _updateTimer.Start();
+
         // Do an immediate first poll to establish a baseline.
         Poll();
+
+        // Check for updates shortly after startup (non-blocking; async void).
+        if (_config.AutoCheckUpdates)
+            CheckForUpdates(userInitiated: false);
     }
 
     // ----------------------------------------------------------------------
@@ -281,6 +322,86 @@ public sealed class TrayApplicationContext : ApplicationContext
         _config.Save();
     }
 
+    private void OnToggleAutoUpdate(object? sender, EventArgs e)
+    {
+        _config.AutoCheckUpdates = _autoUpdateItem.Checked;
+        _config.Save();
+    }
+
+    // ----------------------------------------------------------------------
+    // Updates
+    // ----------------------------------------------------------------------
+
+    /// <summary>
+    /// Check GitHub for a newer release and, if the user agrees, download and
+    /// apply it. Runs as async void deliberately: it's invoked from UI events /
+    /// timers, and because WinForms installs a SynchronizationContext, every
+    /// await continuation resumes back on the UI thread — so touching menu
+    /// items / showing dialogs here is safe.
+    /// </summary>
+    /// <param name="userInitiated">
+    /// When true (the "Check for updates now…" menu item), we also report
+    /// "you're up to date" and surface errors. When false (startup / daily
+    /// checks), we stay silent unless an update is actually found.
+    /// </param>
+    private async void CheckForUpdates(bool userInitiated)
+    {
+        if (_updateInProgress)
+            return;
+
+        _updateInProgress = true;
+        try
+        {
+            var info = await Updater.CheckAsync();
+
+            if (info is null)
+            {
+                if (userInitiated)
+                    _trayIcon.ShowBalloonTip(3000, "Up to date",
+                        $"You're running the latest version ({Updater.CurrentVersion}).",
+                        ToolTipIcon.Info);
+                return;
+            }
+
+            // An update is available — ask the user.
+            var notes = string.IsNullOrWhiteSpace(info.Notes)
+                ? ""
+                : $"\n\nRelease notes:\n{Truncate(info.Notes!.Trim(), 600)}";
+
+            var answer = MessageBox.Show(
+                $"A new version is available.\n\n" +
+                $"Current: {Updater.CurrentVersion}\nLatest: {info.Version}{notes}\n\n" +
+                "Download and install it now? The app will restart.",
+                "Big Picture Audio Switcher — Update available",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+            if (answer != DialogResult.Yes)
+                return;
+
+            _trayIcon.ShowBalloonTip(3000, "Downloading update",
+                $"Fetching version {info.Version}…", ToolTipIcon.Info);
+
+            bool ok = await Updater.DownloadAndApplyAsync(info);
+            if (ok)
+            {
+                // New exe has been launched; quit this (now-old) instance.
+                ExitApp();
+            }
+            else
+            {
+                MessageBox.Show(
+                    "The update could not be applied. Your current version is unchanged.\n\n" +
+                    $"You can download it manually from:\n{info.HtmlUrl}",
+                    "Big Picture Audio Switcher — Update failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        finally
+        {
+            _updateInProgress = false;
+        }
+    }
+
     // ----------------------------------------------------------------------
     // Lifecycle / helpers
     // ----------------------------------------------------------------------
@@ -288,6 +409,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private void ExitApp()
     {
         _timer.Stop();
+        _updateTimer.Stop();
         _trayIcon.Visible = false;   // Remove from tray immediately.
         _trayIcon.Dispose();
         ExitThread();                // Ends Application.Run.
@@ -327,6 +449,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         if (disposing)
         {
             _timer.Dispose();
+            _updateTimer.Dispose();
             _menu.Dispose();
             _trayIcon.Dispose();
         }

@@ -35,6 +35,9 @@ public sealed class Config
     /// <summary>Reflects whether the HKCU ...\Run entry should exist. Actual state is reconciled on startup.</summary>
     public bool StartWithWindows { get; set; }
 
+    /// <summary>Check GitHub for a newer release on startup and once a day while running.</summary>
+    public bool AutoCheckUpdates { get; set; } = true;
+
     // ---- Persistence plumbing ----
 
     private static readonly JsonSerializerOptions JsonOptions = new()
