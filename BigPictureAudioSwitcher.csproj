@@ -27,9 +27,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- The ONLY third-party dependency. Wraps the undocumented IPolicyConfig
-         COM interface so we can actually SET the default output device
-         (NAudio can enumerate but cannot set the default). -->
+    <!-- Wraps the undocumented IPolicyConfig COM interface so we can actually
+         SET the default output device (NAudio can enumerate but cannot set the
+         default). The CoreAudio package's public surface inherits from base
+         types (AudioController<>, DeviceState, etc.) that live in the
+         AudioSwitcher.AudioApi assembly, so that base package must be
+         referenced directly for those members to be visible at compile time. -->
+    <PackageReference Include="AudioSwitcher.AudioApi" Version="4.0.0-alpha5" />
     <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="4.0.0-alpha5" />
   </ItemGroup>
 
