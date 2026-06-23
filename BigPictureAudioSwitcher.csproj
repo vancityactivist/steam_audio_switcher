@@ -16,7 +16,7 @@
     <!-- App version. The in-app updater compares this against the latest
          GitHub release tag (vX.Y.Z). Bump this in lockstep with the tag you
          push so the app never offers "an update" to its own version. -->
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
 
     <!-- Single-file self-contained publish defaults. These can also be passed
          on the command line (see README) but baking them in keeps the publish
