@@ -20,6 +20,25 @@ play: [**☕ Buy me a coffee**](https://buymeacoffee.com/vancityactivist).
 
 ---
 
+## Download & install
+
+Grab the latest `BigPictureAudioSwitcher.exe` from the
+[**Releases page**](https://github.com/vancityactivist/steam_audio_switcher/releases/latest)
+and run it — that's it. It's a single self-contained file; no installer and no
+.NET runtime required. To have it launch on boot, use **Start with Windows** in
+the tray menu.
+
+> First launch shows a Windows SmartScreen warning because the exe isn't
+> code-signed — see [unknown publisher](#windows-protected-your-pc--unknown-publisher)
+> for the two-click bypass and how to verify the download.
+
+Once installed, the app keeps itself up to date via GitHub Releases — see
+[Updates](#updates).
+
+Prefer to build it yourself? See [Build from source](#build-from-source).
+
+---
+
 ## How detection works (and why it's not just "is Steam running")
 
 Big Picture runs as `steamwebhelper.exe` — **the same process** as the ordinary
@@ -37,11 +56,15 @@ never on every poll.
 
 ---
 
-## Build & publish
+## Build from source
+
+> Most people don't need this — just grab the exe from
+> [Releases](#download--install). This section is for developers/contributors.
 
 > ⚠️ This must be **built/published on Windows.** WinForms cannot reliably
 > cross-compile from macOS. Edit on whatever you like; publish on a Windows box
-> (or a Windows VM / CI runner) with the .NET 8 SDK installed.
+> (or a Windows VM / CI runner) with the .NET 8 SDK installed. (The included
+> GitHub Actions workflow does exactly this on every push and tag.)
 
 From the project directory on Windows:
 
